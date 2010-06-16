@@ -24,7 +24,7 @@
 %%% ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 %%% ----------------------------------------------------------------------------
 
-%%% @author Oscar Hellström <oscar@erlang-consulting.com>
+%%% @author Oscar Hellström <oscar@hellstrom.st>
 %%% @doc Connection manager for the HTTP client.
 %%% This gen_server is responsible for keeping track of persistent
 %%% connections to HTTP servers. The only interesting API is
