@@ -69,6 +69,8 @@ header_value(Hdr, Hdrs) ->
 %% @end
 -spec header_value(string(), [{header(), Value}], Default) ->
     Default | Value.
+header_value(Hdr, [{Hdr, Value} | _], _) when is_list(Value) ->
+    string:strip(Value);
 header_value(Hdr, [{Hdr, Value} | _], _) ->
     Value;
 header_value(Hdr, [{ThisHdr, Value}| Hdrs], Default) when is_atom(ThisHdr) ->
