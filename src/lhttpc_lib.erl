@@ -80,11 +80,7 @@ header_value(Hdr, [{ThisHdr, Value}| Hdrs], Default) when is_binary(ThisHdr) ->
     header_value(Hdr, [{binary_to_list(ThisHdr), Value}| Hdrs], Default);
 header_value(Hdr, [{ThisHdr, Value}| Hdrs], Default) ->
     case string:equal(string:to_lower(ThisHdr), Hdr) of
-        true  ->
-            case is_list(Value) of
-                true -> string:strip(Value);
-                false -> Value
-            end;
+        true  -> Value;
         false -> header_value(Hdr, Hdrs, Default)
     end;
 header_value(_, [], Default) ->
