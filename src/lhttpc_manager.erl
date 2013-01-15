@@ -32,6 +32,7 @@
 %%% `connection_count/0' and `connection_count/1'.
 %%% The gen_server is supposed to be started by a supervisor, which is
 %%% normally {@link lhttpc_sup}.
+%%% @end
 %%------------------------------------------------------------------------------
 -module(lhttpc_manager).
 
@@ -307,6 +308,9 @@ code_change(_, State, _) ->
 %% Internal functions
 %%==============================================================================
 
+%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 find_socket({_, _, Ssl} = Dest, Pid, State) ->
     Dests = State#httpc_man.destinations,
     case dict:find(Dest, Dests) of
@@ -331,6 +335,9 @@ find_socket({_, _, Ssl} = Dest, Pid, State) ->
             {no_socket, State}
     end.
 
+%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 remove_socket(Socket, State) ->
     Dests = State#httpc_man.destinations,
     case dict:find(Socket, State#httpc_man.sockets) of
@@ -346,6 +353,9 @@ remove_socket(Socket, State) ->
             State
     end.
 
+%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 store_socket({_, _, Ssl} = Dest, Socket, State) ->
     Timeout = State#httpc_man.timeout,
     Timer = erlang:send_after(Timeout, self(), {timeout, Socket}),
@@ -361,17 +371,26 @@ store_socket({_, _, Ssl} = Dest, Socket, State) ->
         sockets = dict:store(Socket, {Dest, Timer}, State#httpc_man.sockets)
     }.
 
+%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 update_dest(Destination, [], Destinations) ->
     dict:erase(Destination, Destinations);
 update_dest(Destination, Sockets, Destinations) ->
     dict:store(Destination, Sockets, Destinations).
 
+%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 close_sockets(Sockets) ->
     lists:foreach(fun({Socket, {{_, _, Ssl}, Timer}}) ->
                 lhttpc_sock:close(Socket, Ssl),
                 erlang:cancel_timer(Timer)
         end, dict:to_list(Sockets)).
 
+%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 cancel_timer(Timer, Socket) ->
     case erlang:cancel_timer(Timer) of
         false ->
@@ -383,6 +402,9 @@ cancel_timer(Timer, Socket) ->
         _     -> ok
     end.
 
+%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 add_to_queue({_Host, _Port, _Ssl} = Dest, From, Queues) ->
     case dict:find(Dest, Queues) of
         error ->
@@ -391,6 +413,9 @@ add_to_queue({_Host, _Port, _Ssl} = Dest, From, Queues) ->
             dict:store(Dest, queue:in(From, Q), Queues)
     end.
 
+%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 queue_out({_Host, _Port, _Ssl} = Dest, Queues) ->
     case dict:find(Dest, Queues) of
         error ->
@@ -406,6 +431,9 @@ queue_out({_Host, _Port, _Ssl} = Dest, Queues) ->
             {ok, From, Queues2}
     end.
 
+%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 deliver_socket(Socket, {_, _, Ssl} = Dest, State) ->
     case queue_out(Dest, State#httpc_man.queues) of
         empty ->
@@ -425,11 +453,17 @@ deliver_socket(Socket, {_, _, Ssl} = Dest, State) ->
             end
     end.
 
+%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 monitor_client(Dest, {Pid, _} = _From, State) ->
     MonRef = erlang:monitor(process, Pid),
     Clients2 = dict:store(Pid, {Dest, MonRef}, State#httpc_man.clients),
     State#httpc_man{clients = Clients2}.
 
+%------------------------------------------------------------------------------
+%% @private
+%%------------------------------------------------------------------------------
 maybe_apply_defaults([], Options) ->
     Options;
 maybe_apply_defaults([OptName | Rest], Options) ->
