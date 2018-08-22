@@ -37,6 +37,7 @@
 
 -include("lhttpc_types.hrl").
 -include("lhttpc.hrl").
+-include("stacktrace.hrl").
 
 -define(CONNECTION_HDR(HDRS, DEFAULT),
     string:to_lower(lhttpc_lib:header_value("connection", HDRS, DEFAULT))).
@@ -91,13 +92,12 @@ request(From, Host, Port, Ssl, Path, Method, Hdrs, Body, Options) ->
     Result = try
         execute(From, Host, Port, Ssl, Path, Method, Hdrs, Body, Options)
     catch
-        Reason ->
-            {response, self(), {error, Reason}};
         error:closed ->
             {response, self(), {error, connection_closed}};
-        error:Reason ->
-            Stack = erlang:get_stacktrace(),
-            {response, self(), {error, {Reason, Stack}}}
+        ?WITH_STACKTRACE(error, Reason, Stack)
+            {response, self(), {error, {Reason, Stack}}};
+        Reason ->
+            {response, self(), {error, Reason}}
     end,
     case Result of
         {response, _, {ok, {no_return, _}}} -> ok;
@@ -221,9 +221,9 @@ send_request(#client_state{socket = undefined} = State) ->
     catch
         exit:{{{badmatch, {error, {asn1, _}}}, _}, _} ->
             throw(ssl_decode_error);
-        Type:Error ->
+        ?WITH_STACKTRACE(Type, Error, Stack)
                     error_logger:error_msg("Socket connection error: ~p ~p, ~p",
-                                           [Type, Error, erlang:get_stacktrace()])
+                                           [Type, Error, Stack])
     end;
 send_request(#client_state{proxy = #lhttpc_url{}, proxy_setup = false} = State) ->
 % use a proxy.
